@@ -2,7 +2,7 @@
 import os
 import requests
 import jq
-from datetime import datetime, time
+from datetime import datetime, timedelta
 from icalendar import Calendar, Event
 from http.cookiejar import LWPCookieJar
 from dotenv import load_dotenv
@@ -13,6 +13,8 @@ USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
 TEAM_ID = os.getenv('TEAM_ID')
 EVENT_PREFIX = os.getenv('EVENT_PREFIX')
+PRACTICE_BEFORE_MARGIN = int(os.getenv('PRACTICE_BEFORE_MARGIN'))
+MATCH_MARGIN = int(os.getenv('MATCH_MARGIN'))
 
 # Initialisation session
 jar = LWPCookieJar(filename = 'cookies.txt')
@@ -50,9 +52,19 @@ for event in events['results']:
     cal_event.add('summary', "%s - %s" % (EVENT_PREFIX or team['full_name'], event['name']))
     cal_event.add('description', "%s\nhttps://%s.sporteasy.net/event/%s\nDate de lecture de SportEasy : %s" % (
         event['category']['localized_name'], TEAM_ID, event['id'], reading_date))
-    cal_event.add('dtstart', datetime.strptime(event['start_at'], '%Y-%m-%dT%H:%M:%S%z'))
+    if event['category']['type'] == 'training':
+        start_delta = timedelta(minutes=PRACTICE_BEFORE_MARGIN)
+        end_delta = timedelta(minutes=0)
+    elif event['category']['type'] == 'championship_match':
+        start_delta = timedelta(minutes=MATCH_MARGIN)
+        end_delta = timedelta(minutes=MATCH_MARGIN)
+    else:
+        start_delta = timedelta(minutes=0)
+        end_delta = timedelta(minutes=0)
+
+    cal_event.add('dtstart', datetime.strptime(event['start_at'], '%Y-%m-%dT%H:%M:%S%z') - start_delta)
     if event['end_at']:
-        cal_event.add('dtend', datetime.strptime(event['end_at'], '%Y-%m-%dT%H:%M:%S%z'))
+        cal_event.add('dtend', datetime.strptime(event['end_at'], '%Y-%m-%dT%H:%M:%S%z') + end_delta)
     cal.add_component(cal_event)
 
 print(cal.to_ical().decode("utf-8"))
