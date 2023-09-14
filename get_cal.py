@@ -16,8 +16,10 @@ EVENT_PREFIX = os.getenv('EVENT_PREFIX')
 PRACTICE_BEFORE_MARGIN = int(os.getenv('PRACTICE_BEFORE_MARGIN'))
 MATCH_MARGIN = int(os.getenv('MATCH_MARGIN'))
 
+BASE_PATH = os.path.dirname(__file__)
+
 # Initialisation session
-jar = LWPCookieJar(filename = 'cookies.txt')
+jar = LWPCookieJar(filename = os.path.join(BASE_PATH, 'cookies.txt'))
 session = requests.Session()
 session.cookies = jar
 
@@ -67,6 +69,8 @@ for event in events['results']:
         cal_event.add('dtend', datetime.strptime(event['end_at'], '%Y-%m-%dT%H:%M:%S%z') + end_delta)
     cal.add_component(cal_event)
 
-print(cal.to_ical().decode("utf-8"))
+f = open(os.path.join(BASE_PATH, "output/%s.ics" % TEAM_ID), 'wb')
+f.write(cal.to_ical())
+f.close()
 
 jar.save()
