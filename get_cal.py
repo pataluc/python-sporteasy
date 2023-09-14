@@ -2,6 +2,7 @@
 import os
 import requests
 import jq
+import uuid
 from datetime import datetime, timedelta
 from icalendar import Calendar, Event
 from http.cookiejar import LWPCookieJar
@@ -37,8 +38,10 @@ teams = session.get('https://api.sporteasy.net/v2.1/me/teams').json()
 
 team = jq.compile(".results[] | select(.slug_name==\"%s\")" % TEAM_ID).input_value(teams).first()
 
+now = datetime.now()
 cal = Calendar()
 cal.add('prodid', "-// saison %s" % team['current_season']['name'])
+cal.add('version', '2.0')
 cal.add('X-WR-CALNAME', team['full_name'])
 cal.add('X-WR-CALDESC', team['full_name'])
 
@@ -64,9 +67,11 @@ for event in events['results']:
         start_delta = timedelta(minutes=0)
         end_delta = timedelta(minutes=0)
 
-    cal_event.add('dtstart', datetime.strptime(event['start_at'], '%Y-%m-%dT%H:%M:%S%z') - start_delta)
+    cal_event.add('uid', uuid.uuid4())
+    cal_event.add('dtstamp', now)
+    cal_event.add('dtstart', datetime.strptime(event['start_at'], '%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=None) - start_delta)
     if event['end_at']:
-        cal_event.add('dtend', datetime.strptime(event['end_at'], '%Y-%m-%dT%H:%M:%S%z') + end_delta)
+        cal_event.add('dtend', datetime.strptime(event['end_at'], '%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=None) + end_delta)
     cal.add_component(cal_event)
 
 f = open(os.path.join(BASE_PATH, "output/%s.ics" % TEAM_ID), 'wb')
