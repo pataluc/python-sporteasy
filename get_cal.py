@@ -50,7 +50,7 @@ headers = {
     'Accept-Language': 'fr'
 }
 events = session.get("%s?season_id=%s&web=1" % (team['url_events'], team['current_season']['id']), headers=headers).json()
-reading_date = datetime.now().strftime("%Y/%d/%m, %H:%M:%S")
+reading_date = datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
 
 for event in events['results']:
     cal_event = Event()
