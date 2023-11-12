@@ -54,7 +54,6 @@ events = session.get("%s?season_id=%s&web=1" % (team['url_events'], team['curren
 reading_date = datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
 
 utc = ZoneInfo('UTC')
-
 for event in events['results']:
     cal_event = Event()
     cal_event.add('summary', "%s - %s" % (EVENT_PREFIX or team['full_name'], event['name']))
@@ -73,7 +72,7 @@ for event in events['results']:
     cal_event.add('uid', uuid.uuid4())
     cal_event.add('dtstamp', now)
     cal_event.add('dtstart', datetime.strptime(event['start_at'], '%Y-%m-%dT%H:%M:%S%z').astimezone(utc) - start_delta)
-    if event['end_at']:
+    if 'end_at' in event and event['end_at']:
         cal_event.add('dtend', datetime.strptime(event['end_at'], '%Y-%m-%dT%H:%M:%S%z').astimezone(utc) + end_delta)
     cal.add_component(cal_event)
 
